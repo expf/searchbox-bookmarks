@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<style>
+body{width:20em;font:menu;line-height:150%;white-space:nowrap;margin:0.2em}
+div.menu{overflow:hidden;cursor:default;padding:0 0.2em;background:#fff;color:#000}
+div.menu:hover{background:#33c;color:#fff}
+div.item{position:relative}
+div.bottom{position:relative}
+div.movedrop{position:absolute;top:-0.5em;height:1em;width:100%}
+#addmark{vertical-align:bottom}
+#removedrop{position:absolute;right:0}
+form.edit{border:1px solid #666;margin:0 0.2em 0.3em;padding:0.5em}
+label{font:caption}
+</style>
+<style id=drophidden>
+div.movedrop,#removedrop{visibility:hidden}
+</style>
+<title>SearchBox Bookmarks</title>
+<div id=list></div><hr><div id=add class=menu><canvas id=addmark width=14 height=14></canvas>bookmark a search-box on this page <span id=removedrop><canvas id=recyclebin width=15 height=15></canvas></span></div><script src="p.js"></script>

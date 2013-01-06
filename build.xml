@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+<project basedir="." default="all">
+	<taskdef name="jscomp" classname="com.google.javascript.jscomp.ant.CompileTask" classpath="${closure}/compiler.jar"/>
+	<target name="all" depends="compile,html,manifest">
+	</target>
+	<target name="compile">
+		<antcall target="compile-file">
+			<param name="file" value="b.js" />
+		</antcall>
+		<antcall target="compile-file">
+			<param name="file" value="p.js" />
+		</antcall>
+		<antcall target="compile-file">
+			<param name="file" value="c.js" />
+		</antcall>
+	</target>
+	<target name="compile-file">
+		<jscomp compilationLevel="advanced" warning="verbose" debug="false" output="dst/${file}">
+			<externs dir="${externs}">
+				<file name="chrome_extensions.js"/>
+				<file name="json.js"/>
+			</externs>
+			<sources dir="src">
+				<file name="lib.js"/>
+				<file name="${file}"/>
+			</sources>
+		</jscomp>
+	</target>
+	<target name="html">
+		<fixcrlf srcdir="src" includes="*.html" destDir="dst" eol="lf" eof="remove" />
+	</target>
+	<target name="manifest">
+		<copy file="src/manifest.json" todir="dst">
+			<filterset>
+				<filter token="version" value="${version}" />
+			</filterset>
+		</copy>
+		<replaceregexp file="dst/manifest.json" match="[&#x0a;&#x0d;&#x09;]" replace="" flags="g" />
+	</target>
+</project>
