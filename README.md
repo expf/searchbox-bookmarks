@@ -7,7 +7,6 @@ How to build
 ----------
 
 1. Get following softwares.
-
    * JDK
    * [Apache Ant](http://ant.apache.org/)
    * [Closure Compiler](https://developers.google.com/closure/compiler/)
@@ -15,8 +14,9 @@ How to build
    * Google Chrome
 
 2. Build.
-
-   `ant -Dversion=0 -Dclosure=../build -Dexterns=../contrib/externs`
+   ```
+   ant -Dversion=0 -Dclosure=../build -Dexterns=../contrib/externs
+   ```
 
 3. Create image files.
 
