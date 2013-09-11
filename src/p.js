@@ -88,7 +88,7 @@ function save() {
 		}
 	}
 	store_bookmarks(save_data);
-	chrome.extension.sendMessage(MSG_REFRESH_CONTEXT_MENU);
+	chrome.runtime.sendMessage(MSG_REFRESH_CONTEXT_MENU);
 }
 
 function create_search_form(bookmark, item) {

@@ -40,7 +40,7 @@ function set_context_menu() {
 
 set_context_menu();
 
-chrome.extension.onMessage.addListener(function(request, sender) {
+chrome.runtime.onMessage.addListener(function(request, sender) {
 	if (request == MSG_REFRESH_CONTEXT_MENU) {
 		chrome.contextMenus.removeAll();
 		set_context_menu();

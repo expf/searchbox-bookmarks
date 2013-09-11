@@ -26,7 +26,7 @@ function make_handler(form, target) {return function(e) {
 		"params":params,
 		"charset":form.acceptCharset||document.characterSet
 	};
-	chrome.extension.sendMessage(bookmark);
+	chrome.runtime.sendMessage(bookmark);
 	reset();
 };}
 
