@@ -18,7 +18,6 @@
 		<jscomp compilationLevel="advanced" warning="verbose" debug="false" output="dst/${file}">
 			<externs dir="${externs}">
 				<file name="chrome_extensions.js"/>
-				<file name="json.js"/>
 			</externs>
 			<sources dir="src">
 				<file name="lib.js"/>
