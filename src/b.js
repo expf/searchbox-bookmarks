@@ -1,8 +1,13 @@
-var last_url = "";
-function create_handler(bookmark) {return function(info, tab) {
+chrome.contextMenus.onClicked.addListener(function(info, tab) {
+	var bookmarks = fetch_bookmarks();
+	var bookmark = bookmarks[info.menuItemId];
 	var url = bookmark["url"];
+
 	// Google Chrome doesn't open the same URL as the previous.
+	var last_url = window["localStorage"].getItem("l");
 	if (url == last_url) url += "#";
+	window["localStorage"].setItem("l", url);
+
 	var form = create("form", {
 		"target":"_blank",
 		"action":url,
@@ -16,25 +21,27 @@ function create_handler(bookmark) {return function(info, tab) {
 		form.appendChild(i)
 	}
 	form.submit();
-	last_url=url;
-};}
+});
 
 function set_context_menu() {
+	chrome.contextMenus.removeAll();
+
 	var bookmarks = fetch_bookmarks();
 	if (!(bookmarks instanceof Array)) {
 		bookmarks = [];
 		store_bookmarks(bookmarks);
 	}
 
-	bookmarks.forEach(function(bookmark) {
+	for (var i = 0; i < bookmarks.length; i++) {
+		var bookmark = bookmarks[i];
 		if (bookmark["context"]) {
 			chrome.contextMenus.create({
+				"id":"" + i,
 				"title":bookmark["title"],
-				"contexts":["selection"],
-				"onclick":create_handler(bookmark)
+				"contexts":["selection"]
 			});
 		}
-	});
+	}
 
 }
 
@@ -42,7 +49,6 @@ set_context_menu();
 
 chrome.runtime.onMessage.addListener(function(request, sender) {
 	if (request == MSG_REFRESH_CONTEXT_MENU) {
-		chrome.contextMenus.removeAll();
 		set_context_menu();
 	} else {
 		var bookmarks = fetch_bookmarks();
