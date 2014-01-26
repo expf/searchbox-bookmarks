@@ -64,20 +64,26 @@ add.onclick = function() {
 	chrome.tabs.executeScript(null, {"file":"c.js", "allFrames":true});
 };
 
-var temporary = null;
-function set_temporary(elem, parent) {
-	remove_temporary();
-	temporary = elem;
-	parent.appendChild(elem);
-}
-function remove_temporary() {
-	if (temporary) {
-		temporary.parentNode.removeChild(temporary);
-		temporary = null;
+var opened_item = null;
+function clear_item(item) {
+	var drop = item.firstChild;
+	while (drop.nextSibling) {
+		item.removeChild(drop.nextSibling);
 	}
 }
-function has_temporary(elem) {
-	return temporary && temporary.parentNode === elem;
+function open_item(item) {
+	if (item !== opened_item) {
+		close_item();
+	}
+	clear_item(item);
+	opened_item = item;
+}
+function close_item() {
+	if (opened_item) {
+		clear_item(opened_item);
+		opened_item.appendChild(create_title(bookmarks[opened_item.id]));
+		opened_item = null;
+	}
 }
 
 function save() {
@@ -91,7 +97,10 @@ function save() {
 	chrome.runtime.sendMessage(MSG_REFRESH_CONTEXT_MENU);
 }
 
-function create_search_form(bookmark, item) {
+function show_search_form(e) {
+	var item = e.currentTarget.parentNode;
+	var bookmark = bookmarks[item.id];
+
 	var form = create("form", {
 		"target":"_blank",
 		"action":bookmark["url"],
@@ -114,11 +123,21 @@ function create_search_form(bookmark, item) {
 	input = create("input", {"type":"submit"});
 	form.appendChild(input);
 
-	set_temporary(form, item);
+	open_item(item);
+	item.appendChild(create2("div", {"className":"search_title", "onclick":show_edit_form}, [
+		create2("div", {"className":"edit"}, [
+			document.createTextNode("[Edit]")
+		]),
+		document.createTextNode(bookmark["title"])
+	]));
+	item.appendChild(form);
 	focus.focus();
 }
 
-function create_edit_form(bookmark, item) {
+function show_edit_form(e) {
+	var item = e.currentTarget.parentNode;
+	var bookmark = bookmarks[item.id];
+
 	var title_input = create("input", {"type":"text", "value":bookmark["title"]});
 	var checkbox=create("input", {"type":"checkbox", "id":"check"});
 	if (bookmark["context"]) {
@@ -136,29 +155,22 @@ function create_edit_form(bookmark, item) {
 			bookmark["title"] = title_input.value;
 			bookmark["context"] = checkbox.checked ? true : undefined;
 			save();
-			remove_temporary();
-			var child = item.firstChild;
-			while (child.className != "menu") child=child.nextSibling;
-			child.removeChild(child.firstChild);
-			child.appendChild(document.createTextNode(bookmark["title"]));
+			close_item();
 			return false;
 		}}),
 		create("input", {"type":"submit", "value":"Cancel", "onclick":function() {
-			remove_temporary();
+			close_item();
 			return false;
 		}})
 	]);
-	set_temporary(form, item);
+	open_item(item);
+	item.appendChild(form);
 }
 
-function show_form(e) {
-	var item = e.currentTarget.parentNode;
-	var bookmark = bookmarks[item.id];
-	if (has_temporary(item)) {
-		create_edit_form(bookmark, item);
-	} else {
-		create_search_form(bookmark, item);
-	}
+function create_title(bookmark) {
+	return create2("div", {"className":"menu", "onclick":show_search_form}, [
+		document.createTextNode(bookmark["title"])
+	]);
 }
 
 function item_ondragstart(e) {
@@ -226,9 +238,7 @@ bookmarks.forEach(function(bookmark, i) {
 		"ondragend":item_ondragend
 	}, [
 		create("div", movedrop_props),
-		create2("div", {"className":"menu", "onclick":show_form}, [
-			document.createTextNode(bookmark["title"])
-		])
+		create_title(bookmark)
 	]));
 });
 
