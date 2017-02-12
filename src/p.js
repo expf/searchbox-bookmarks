@@ -61,7 +61,7 @@ var bookmarks = fetch_bookmarks();
 
 add.onclick = function() {
 	window.close();
-	chrome.tabs.executeScript(null, {"file":"c.js", "allFrames":true});
+	chrome.tabs.executeScript({"file":"c.js", "allFrames":true});
 };
 
 var opened_item = null;
