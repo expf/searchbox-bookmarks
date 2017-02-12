@@ -20,7 +20,10 @@ chrome.contextMenus.onClicked.addListener(function(info, tab) {
 		var i = create("input", {"name":n, "type":"hidden", "value":v});
 		form.appendChild(i)
 	}
+	var body = document.getElementsByTagName("body")[0];
+	body.appendChild(form);
 	form.submit();
+	body.removeChild(form);
 });
 
 function set_context_menu() {
