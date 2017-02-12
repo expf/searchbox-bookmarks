@@ -10,7 +10,7 @@ How to build
    * JDK
    * [Apache Ant](http://ant.apache.org/)
    * [Closure Compiler](https://developers.google.com/closure/compiler/)
-   * `chrome_extensions.js` and `json.js` in the [Closure Compiler source](http://code.google.com/p/closure-compiler/source/browse/trunk/contrib/externs/)
+   * `chrome_extensions.js` in the [Closure Compiler source](https://github.com/google/closure-compiler)
    * Google Chrome
 
 2. Build.
