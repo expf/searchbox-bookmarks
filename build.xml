@@ -17,6 +17,7 @@
 	<target name="compile-file">
 		<jscomp compilationLevel="advanced" warning="verbose" debug="false" output="dst/${file}">
 			<externs dir="${externs}">
+				<file name="chrome.js"/>
 				<file name="chrome_extensions.js"/>
 			</externs>
 			<sources dir="src">
