@@ -17,9 +17,7 @@
 		"default_icon":"a.png"
 	},
 	"permissions":[
-		"tabs",
-		"http://*/*",
-		"https://*/*",
+		"activeTab",
 		"contextMenus"
 	]
 }
