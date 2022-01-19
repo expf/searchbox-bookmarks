@@ -1,26 +1,27 @@
-chrome.contextMenus.onClicked.addListener(function(info, tab) {
-	var bookmarks = fetch_bookmarks();
-	var bookmark = bookmarks[info.menuItemId];
-	var url = bookmark["url"];
+import {MSG_REFRESH_CONTEXT_MENU, create, fetch_bookmarks, store_bookmarks} from "./lib.js";
+
+chrome.contextMenus.onClicked.addListener((info, tab) => {
+	const bookmarks = fetch_bookmarks();
+	const bookmark = bookmarks[info.menuItemId];
+	let url = bookmark["url"];
 
 	// Google Chrome doesn't open the same URL as the previous.
-	var last_url = window["localStorage"].getItem("l");
+	const last_url = window["localStorage"].getItem("l");
 	if (url == last_url) url += "#";
 	window["localStorage"].setItem("l", url);
 
-	var form = create("form", {
+	const form = create("form", {
 		"target":"_blank",
 		"action":url,
 		"acceptCharset":bookmark["charset"]
 	});
 	if (bookmark["method"]) form.method = bookmark["method"];
-	for (var n in bookmark["params"]) {
-		var v = bookmark["params"][n];
-		if (v == null) v = info.selectionText;
-		var i = create("input", {"name":n, "type":"hidden", "value":v});
+	for (const n in bookmark["params"]) {
+		const v = bookmark["params"][n] ?? info.selectionText;
+		const i = create("input", {"name":n, "type":"hidden", "value":v});
 		form.appendChild(i)
 	}
-	var body = document.getElementsByTagName("body")[0];
+	const body = document.getElementsByTagName("body")[0];
 	body.appendChild(form);
 	// "form.submit()" fails if the form containts a control named "submit".
 	Object.getPrototypeOf(form).submit.call(form);
@@ -30,14 +31,14 @@ chrome.contextMenus.onClicked.addListener(function(info, tab) {
 function set_context_menu() {
 	chrome.contextMenus.removeAll();
 
-	var bookmarks = fetch_bookmarks();
+	let bookmarks = fetch_bookmarks();
 	if (!(bookmarks instanceof Array)) {
 		bookmarks = [];
 		store_bookmarks(bookmarks);
 	}
 
-	for (var i = 0; i < bookmarks.length; i++) {
-		var bookmark = bookmarks[i];
+	for (let i = 0; i < bookmarks.length; i++) {
+		const bookmark = bookmarks[i];
 		if (bookmark["context"]) {
 			chrome.contextMenus.create({
 				"id":"" + i,
@@ -51,11 +52,11 @@ function set_context_menu() {
 
 set_context_menu();
 
-chrome.runtime.onMessage.addListener(function(request, sender) {
+chrome.runtime.onMessage.addListener((request, sender) => {
 	if (request == MSG_REFRESH_CONTEXT_MENU) {
 		set_context_menu();
 	} else {
-		var bookmarks = fetch_bookmarks();
+		const bookmarks = fetch_bookmarks();
 		bookmarks.push(request);
 		store_bookmarks(bookmarks);
 	}

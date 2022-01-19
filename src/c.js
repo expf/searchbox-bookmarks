@@ -1,25 +1,23 @@
-// Do not initialize because the value need to be kept
-// across some script insertions.
-/** @type {Array.<Element>} */
-var elements;
+import {foreach} from "./lib.js";
+
+const classname = 'https://github.com/expf/searchbox-bookmarks$' + chrome.runtime.id;
 
 function reset() {
-	if (elements) foreach(elements, function(element) {
+	foreach(document.getElementsByClassName(classname), (element) => {
 		element.parentNode.removeChild(element);
 	});
-	elements = [];
 }
 
 reset();
 
-function make_handler(form, target) {return function(e) {
-	var params = {};
-	foreach(form.elements, function(input) {
+function make_handler(form, target) {return (e) => {
+	const params = {};
+	foreach(form.elements, (input) => {
 		if (!((input.type == "checkbox" || input.type == "radio") && !input.checked)) {
 			params[input.name] = (input === target) ? null : input.value;
 		}
 	});
-	var bookmark = {
+	const bookmark = {
 		"title":document.title,
 		"method":form.method,
 		"url":form.action,
@@ -38,7 +36,7 @@ function draw(c){
 	c.lineCap="round";
 	c.lineJoin="round";
 	c.beginPath();
-	for (var i = 0, d = 13, m = c.moveTo; i < 6.3; i += Math.PI/5, d = 18.2-d, m = c.lineTo) m.call(c,14+Math.sin(i)*d, 14-Math.cos(i)*d);
+	for (let i = 0, d = 13, m = c.moveTo; i < 6.3; i += Math.PI/5, d = 18.2-d, m = c.lineTo) m.call(c,14+Math.sin(i)*d, 14-Math.cos(i)*d);
 	c.fill();
 	c.stroke();
 
@@ -46,7 +44,7 @@ function draw(c){
 	c.strokeStyle="#060";
 	c.fillStyle="#6c6";
 	c.beginPath();
-	var a1=17.5, a2=21.5, a3=24.5, a4=28.5;
+	const a1=17.5, a2=21.5, a3=24.5, a4=28.5;
 	c.moveTo(a2,a1);
 	c.lineTo(a3,a1);
 	c.lineTo(a3,a2);
@@ -65,12 +63,13 @@ function draw(c){
 
 }
 
-foreach(document.forms, function(form) {
-	foreach(form.elements, function(input) {
+foreach(document.forms, (form) => {
+	foreach(form.elements, (input) => {
 		if (input.type == "text" || input.type == "search") {
-			var span = document.createElement("span");
-			var canvas = document.createElement("canvas");
-			var z = window.getComputedStyle(input, "").zIndex;
+			const span = document.createElement("span");
+			span.className = classname;
+			const canvas = document.createElement("canvas");
+			const z = window.getComputedStyle(input, "").zIndex;
 			canvas.style.zIndex = isNaN(z) ? 1 : z+1;
 			canvas.style.position = "absolute";
 			canvas.style.cursor = "pointer";
@@ -79,7 +78,6 @@ foreach(document.forms, function(form) {
 			draw(canvas.getContext("2d"));
 			canvas.onclick = make_handler(form, input);
 			span.appendChild(canvas);
-			elements.push(span);
 			input.parentNode.insertBefore(span, input);
 		}
 	});
