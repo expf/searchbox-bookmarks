@@ -22,7 +22,8 @@ chrome.contextMenus.onClicked.addListener(function(info, tab) {
 	}
 	var body = document.getElementsByTagName("body")[0];
 	body.appendChild(form);
-	form.submit();
+	// "form.submit()" fails if the form containts a control named "submit".
+	Object.getPrototypeOf(form).submit.call(form);
 	body.removeChild(form);
 });
 
