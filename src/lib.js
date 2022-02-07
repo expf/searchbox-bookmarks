@@ -1,7 +1,7 @@
 export const MSG_REFRESH_CONTEXT_MENU = 1;
 
 export function foreach(array, callback) {
-	for (var i = 0; i < array.length; i++) callback(array[i]);
+	Array.from(array).forEach(callback);
 }
 
 export function create(name, props) {
