@@ -28,6 +28,32 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
 	body.removeChild(form);
 });
 
+let store_state = 0;
+function store(bookmarks) {
+	if (store_state === 0) {
+		store_state = 1;
+		const store_bookmarks = bookmarks.map((bookmark) => {
+			const store_bookmark = {...bookmark};
+			const store_params = [];
+			for (const n in bookmark["params"]) {
+				const v = bookmark["params"][n];
+				store_params.push(v == null ? [n] : [n, v]);
+			}
+			store_bookmark["params"] = store_params;
+			return  store_bookmark;
+		});
+		chrome.storage.local.set({"b": JSON.stringify(store_bookmarks)}, () => {
+			const new_bookmarks = store_state;
+			store_state = 0;
+			if (new_bookmarks instanceof Array) {
+				store(new_bookmarks);
+			}
+		});
+	} else {
+		store_state = bookmarks;
+	}
+}
+
 function set_context_menu() {
 	chrome.contextMenus.removeAll();
 
@@ -47,6 +73,7 @@ function set_context_menu() {
 			});
 		}
 	}
+	store(bookmarks);
 
 }
 
@@ -59,5 +86,6 @@ chrome.runtime.onMessage.addListener((request, sender) => {
 		const bookmarks = fetch_bookmarks();
 		bookmarks.push(request);
 		store_bookmarks(bookmarks);
+		store(bookmarks);
 	}
 });

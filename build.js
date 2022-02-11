@@ -33,6 +33,7 @@ const manifest = {
 	permissions: [
 		"activeTab",
 		"contextMenus",
+		"storage",
 	],
 };
 
