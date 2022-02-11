@@ -51,6 +51,7 @@ esbuild.build({
 	entryPoints: ['src/b.js', 'src/c.js', 'src/p.js'],
 	outdir: 'dst/',
 	target: ['chrome88'],
+	format: "esm",
 	bundle: true,
 	minify: minify,
 	sourcemap: sourcemap,
