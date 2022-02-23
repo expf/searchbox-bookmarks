@@ -15,7 +15,7 @@ options.watch = () => {watch = true;};
 const manifest = {
 	name: "SearchBox Bookmarks",
 	version: "0",
-	manifest_version: 2,
+	manifest_version: 3,
 	description: "Bookmark search-boxes and use the search-box in the toolbar popup.",
 	icons: {
 		32: "32.png",
@@ -23,10 +23,10 @@ const manifest = {
 		128: "128.png",
 	},
 	background: {
-		scripts: ["b.js"],
-		persistent: false,
+		service_worker: "b.js",
+		type: "module",
 	},
-	browser_action: {
+	action: {
 		default_popup: "p.html",
 		default_icon: "a.png",
 	},
@@ -34,6 +34,7 @@ const manifest = {
 		"activeTab",
 		"contextMenus",
 		"storage",
+		"scripting",
 	],
 };
 
@@ -50,7 +51,7 @@ fs.writeFileSync('dst/manifest.json', JSON.stringify(manifest));
 esbuild.build({
 	entryPoints: ['src/b.js', 'src/c.js', 'src/p.js'],
 	outdir: 'dst/',
-	target: ['chrome88'],
+	target: ['chrome89'],
 	format: "esm",
 	bundle: true,
 	minify: minify,

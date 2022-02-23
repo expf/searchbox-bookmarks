@@ -1,48 +1,44 @@
-import {MSG_REFRESH_CONTEXT_MENU, create, fetch_bookmarks, store_bookmarks} from "./lib.js";
+import {fetch_bookmarks} from "./lib.js";
 
-chrome.contextMenus.onClicked.addListener((info, tab) => {
-	const bookmarks = fetch_bookmarks();
-	const bookmark = bookmarks[info.menuItemId];
-	let url = bookmark["url"];
+let bookmarks_async = fetch_bookmarks();
+let context_menu_bookmarks;
 
-	// Google Chrome doesn't open the same URL as the previous.
-	const last_url = window["localStorage"].getItem("l");
-	if (url == last_url) url += "#";
-	window["localStorage"].setItem("l", url);
-
-	const form = create("form", {
-		"target":"_blank",
-		"action":url,
-		"acceptCharset":bookmark["charset"]
-	});
+function context_menu(bookmark, selection_text) {
+	const form = document.createElement("form");
+	form.target = "_blank";
+	form.action = bookmark["url"];
+	form.acceptCharset = bookmark["charset"];
+	form.style.display = "none";
 	if (bookmark["method"]) form.method = bookmark["method"];
-	for (const n in bookmark["params"]) {
-		const v = bookmark["params"][n] ?? info.selectionText;
-		const i = create("input", {"name":n, "type":"hidden", "value":v});
-		form.appendChild(i)
+	for (const [name, value] of bookmark["params"]) {
+		const input = document.createElement("input");
+		input.name = name;
+		input.type = "hidden";
+		input.value = value ?? selection_text;
+		form.appendChild(input)
 	}
 	const body = document.getElementsByTagName("body")[0];
 	body.appendChild(form);
 	// "form.submit()" fails if the form containts a control named "submit".
 	Object.getPrototypeOf(form).submit.call(form);
 	body.removeChild(form);
+}
+
+chrome.contextMenus.onClicked.addListener(async (info, tab) => {
+	const bookmark = (context_menu_bookmarks ?? await bookmarks_async)[info.menuItemId];
+
+	chrome.scripting.executeScript({
+		target: {tabId: tab.id},
+		func: context_menu,
+		args: [bookmark, info.selectionText]
+	});
 });
 
 let store_state = 0;
 function store(bookmarks) {
 	if (store_state === 0) {
 		store_state = 1;
-		const store_bookmarks = bookmarks.map((bookmark) => {
-			const store_bookmark = {...bookmark};
-			const store_params = [];
-			for (const n in bookmark["params"]) {
-				const v = bookmark["params"][n];
-				store_params.push(v == null ? [n] : [n, v]);
-			}
-			store_bookmark["params"] = store_params;
-			return  store_bookmark;
-		});
-		chrome.storage.local.set({"b": JSON.stringify(store_bookmarks)}, () => {
+		chrome.storage.local.set({"b": JSON.stringify(bookmarks)}, () => {
 			const new_bookmarks = store_state;
 			store_state = 0;
 			if (new_bookmarks instanceof Array) {
@@ -55,37 +51,38 @@ function store(bookmarks) {
 }
 
 function set_context_menu() {
-	chrome.contextMenus.removeAll();
-
-	let bookmarks = fetch_bookmarks();
-	if (!(bookmarks instanceof Array)) {
-		bookmarks = [];
-		store_bookmarks(bookmarks);
-	}
-
-	for (let i = 0; i < bookmarks.length; i++) {
-		const bookmark = bookmarks[i];
-		if (bookmark["context"]) {
-			chrome.contextMenus.create({
-				"id":"" + i,
-				"title":bookmark["title"],
-				"contexts":["selection"]
-			});
+	bookmarks_async.then((bookmarks) => {
+		chrome.contextMenus.removeAll();
+		context_menu_bookmarks = bookmarks;
+		for (let i = 0; i < bookmarks.length; i++) {
+			const bookmark = bookmarks[i];
+			if (bookmark["context"]) {
+				chrome.contextMenus.create({
+					"id":"" + i,
+					"title":bookmark["title"],
+					"contexts":["selection"]
+				});
+			}
 		}
-	}
-	store(bookmarks);
-
+	});
 }
 
 set_context_menu();
 
-chrome.runtime.onMessage.addListener((request, sender) => {
-	if (request == MSG_REFRESH_CONTEXT_MENU) {
+chrome.runtime.onMessage.addListener(async (request, sender) => {
+	if (request instanceof Array) {
+		const [count, new_bookmarks] = request;
+		bookmarks_async = bookmarks_async.then((old_bookmarks) => {
+			new_bookmarks.push(...old_bookmarks.slice(count));
+			store(new_bookmarks);
+			return new_bookmarks;
+		});
 		set_context_menu();
 	} else {
-		const bookmarks = fetch_bookmarks();
-		bookmarks.push(request);
-		store_bookmarks(bookmarks);
-		store(bookmarks);
+		bookmarks_async = bookmarks_async.then((bookmarks) => {
+			bookmarks.push(request);
+			store(bookmarks);
+			return bookmarks;
+		});
 	}
 });

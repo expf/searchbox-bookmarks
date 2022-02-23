@@ -11,10 +11,10 @@ function reset() {
 reset();
 
 function make_handler(form, target) {return (e) => {
-	const params = {};
+	const params = [];
 	foreach(form.elements, (input) => {
 		if (!((input.type == "checkbox" || input.type == "radio") && !input.checked)) {
-			params[input.name] = (input === target) ? null : input.value;
+			params.push((input === target) ? [input.name] : [input.name, input.value]);
 		}
 	});
 	const bookmark = {

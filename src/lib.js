@@ -1,5 +1,3 @@
-export const MSG_REFRESH_CONTEXT_MENU = 1;
-
 export function foreach(array, callback) {
 	Array.from(array).forEach(callback);
 }
@@ -20,11 +18,11 @@ export function create2(name, props, children) {
 	return elem;
 }
 
-export function fetch_bookmarks() {
-	return JSON.parse(window["localStorage"].getItem("b"));
+export async function fetch_bookmarks() {
+	const b = await chrome.storage.local.get("b");
+	if (b["b"]) {
+		return JSON.parse(b["b"]);
+	} else {
+		return [];
+	}
 }
-
-export function store_bookmarks(bookmarks) {
-	window["localStorage"].setItem("b",JSON.stringify(bookmarks));
-}
-

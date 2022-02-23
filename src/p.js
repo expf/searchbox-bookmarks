@@ -1,4 +1,4 @@
-import {MSG_REFRESH_CONTEXT_MENU, create, create2, fetch_bookmarks, store_bookmarks} from "./lib.js";
+import {create, create2, fetch_bookmarks} from "./lib.js";
 
 const DRAG_FORMAT = "text/x-bookmark-index";
 
@@ -61,11 +61,16 @@ c.beginPath();
 c.arc(7.5,3.5,2.5,Math.PI,Math.PI*2);
 c.stroke();
 
-const bookmarks = fetch_bookmarks();
+const bookmarks = await fetch_bookmarks();
+let bookmarks_count = bookmarks.length;
 
-add.onclick = () => {
+add.onclick = async () => {
 	window.close();
-	chrome.tabs.executeScript({"file":"c.js", "allFrames":true});
+	const [tab] = await chrome.tabs.query({active: true, currentWindow: true});
+	chrome.scripting.executeScript({
+		target: {tabId: tab.id, allFrames: true},
+		files: ["c.js"],
+	});
 };
 
 let opened_item = null;
@@ -97,8 +102,8 @@ function save() {
 			save_data.push(bookmarks[e.id]);
 		}
 	}
-	store_bookmarks(save_data);
-	chrome.runtime.sendMessage(MSG_REFRESH_CONTEXT_MENU);
+	chrome.runtime.sendMessage([bookmarks_count, save_data]);
+	bookmarks_count = save_data.length;
 }
 
 function show_search_form(e) {
@@ -112,15 +117,14 @@ function show_search_form(e) {
 	});
 	if (bookmark["method"]) form.method = bookmark["method"];
 	let focus;
-	for (const n in bookmark["params"]) {
-		const v = bookmark["params"][n];
-		const input = create("input", {"name":n});
-		if (v == null) {
+	for (const [name, value] of bookmark["params"]) {
+		const input = create("input", {"name":name});
+		if (value == null) {
 			input.type="text";
-			focus=input
+			focus=input;
 		} else {
 			input.type="hidden";
-			input.value=v
+			input.value=value;
 		}
 		form.appendChild(input);
 	}
