@@ -2,21 +2,20 @@ export function foreach(array, callback) {
 	Array.from(array).forEach(callback);
 }
 
-export function create(name, props) {
-	const elem = document.createElement(name);
-	for (var a in props) {
-		elem[a] = props[a];
-	}
-	return elem;
+export function create_element(name, ...args) {
+	const element = Array.isArray(name) ? document.createElementNS(...name) : document.createElement(name);
+	args.forEach(arg => {
+		if (typeof arg === "function") {
+			arg(element);
+		} else {
+			element.append(arg);
+		}
+	});
+	return element;
 }
 
-export function create2(name, props, children) {
-	const elem = create(name, props);
-	for (let i = 0; i < children.length; i++) {
-		elem.appendChild(children[i]);
-	}
-	return elem;
-}
+export const set_class = className => e => {e.className = className;};
+export const set_attr = (name, value) => e => {e.setAttribute(name, value);};
 
 export async function fetch_bookmarks() {
 	const b = await chrome.storage.local.get("b");

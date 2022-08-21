@@ -1,65 +1,45 @@
-import {create, create2, fetch_bookmarks} from "./lib.js";
+import { create_element, set_class, set_attr, fetch_bookmarks } from "./lib.js";
 
+const SVG_NS = "http://www.w3.org/2000/svg";
 const DRAG_FORMAT = "text/x-bookmark-index";
 
-const add = document.getElementById("add");
-const addmark = document.getElementById("addmark");
-const recyclebin = document.getElementById("recyclebin");
-const removedrop = document.getElementById("removedrop");
-const list = document.getElementById("list");
+const list = create_element("div");
+const addmark = create_element([SVG_NS, "svg"],
+	set_attr("version", "1.1"),
+	set_attr("width", 14),
+	set_attr("height", 15),
+	create_element([SVG_NS, "path"],
+		set_attr("d", "M5.5,1.5h3v4h4v3h-4v4h-3v-4h-4v-3h4v-4z"),
+		set_attr("stroke", "#060"),
+		set_attr("stroke-width", "1"),
+		set_attr("fill", "#6c6"),
+	),
+);
+addmark.style.verticalAlign = "middle";
+const recyclebin = create_element([SVG_NS, "svg"],
+	set_attr("version", "1.1"),
+	set_attr("width", 15),
+	set_attr("height", 15),
+	create_element([SVG_NS, "path"],
+		set_attr("d", "M1,4H14M3,4V14H12V4M6,7V11M9,7V11M5,3.5A2.5,2.5,0,1,1,10,3.5"),
+		set_attr("stroke-width", "1.7"),
+		set_attr("stroke-linecap", "round"),
+		set_attr("stroke-linejoin", "round"),
+		set_attr("fill", "transparent"),
+	),
+);
+const removedrop = create_element("span",
+	set_class("removedrop"),
+	recyclebin,
+);
+const add = create_element("div",
+	set_class("menu"),
+	addmark,
+	"bookmark a search-box on this page ",
+	removedrop,
+);
+
 const drophidden = document.getElementById("drophidden");
-
-const size = add.clientHeight;
-addmark.height = size;
-const pad = (size-14)>>1;
-let c = addmark.getContext("2d");
-c.lineWidth = 1;
-c.strokeStyle = "#060";
-c.fillStyle = "#6c6";
-c.beginPath();
-const a1=1.5, a2=5.5, a3=8.5, a4=12.5;
-c.moveTo(a2,pad+a1);
-c.lineTo(a3,pad+a1);
-c.lineTo(a3,pad+a2);
-c.lineTo(a4,pad+a2);
-c.lineTo(a4,pad+a3);
-c.lineTo(a3,pad+a3);
-c.lineTo(a3,pad+a4);
-c.lineTo(a2,pad+a4);
-c.lineTo(a2,pad+a3);
-c.lineTo(a1,pad+a3);
-c.lineTo(a1,pad+a2);
-c.lineTo(a2,pad+a2);
-c.lineTo(a2,pad+a1);
-c.fill();
-c.stroke();
-
-c = recyclebin.getContext("2d");
-c.lineWidth = 1.7;
-c.strokeStyle = "#000";
-c.lineCap = "round";
-c.lineJoin = "round";
-c.beginPath();
-c.moveTo(1,4);
-c.lineTo(14,4);
-c.stroke();
-c.beginPath();
-c.moveTo(3,4);
-c.lineTo(3,14);
-c.lineTo(12,14);
-c.lineTo(12,4);
-c.stroke();
-c.beginPath();
-c.moveTo(6,7);
-c.lineTo(6,11);
-c.stroke();
-c.beginPath();
-c.moveTo(9,7);
-c.lineTo(9,11);
-c.stroke();
-c.beginPath();
-c.arc(7.5,3.5,2.5,Math.PI,Math.PI*2);
-c.stroke();
 
 const bookmarks = await fetch_bookmarks();
 let bookmarks_count = bookmarks.length;
@@ -90,7 +70,7 @@ function open_item(item) {
 function close_item() {
 	if (opened_item) {
 		clear_item(opened_item);
-		opened_item.appendChild(create_title(bookmarks[opened_item.id]));
+		opened_item.append(create_title(bookmarks[opened_item.id]));
 		opened_item = null;
 	}
 }
@@ -110,34 +90,48 @@ function show_search_form(e) {
 	const item = e.currentTarget.parentNode;
 	const bookmark = bookmarks[item.id];
 
-	const form = create("form", {
-		"target":"_blank",
-		"action":bookmark["url"],
-		"acceptCharset":bookmark["charset"]
-	});
-	if (bookmark["method"]) form.method = bookmark["method"];
 	let focus;
-	for (const [name, value] of bookmark["params"]) {
-		const input = create("input", {"name":name});
-		if (value == null) {
-			input.type="text";
-			focus=input;
-		} else {
-			input.type="hidden";
-			input.value=value;
-		}
-		form.appendChild(input);
-	}
-	form.appendChild(create("input", {"type":"submit"}));
+	const inputs = bookmark["params"].map(([name, value]) => create_element("input",
+		(el) => {
+			el.name = name;
+			if (value == undefined) {
+				el.type="text";
+				focus=el;
+			} else {
+				el.type="hidden";
+				el.value=value;
+			}
+		},
+	));
+
+	const form = create_element("form",
+		(el) => {
+			el.target = "_blank";
+			el.action = bookmark["url"];
+			el.acceptCharset = bookmark["charset"];
+			el.method = bookmark["method"];
+		},
+		...inputs,
+		create_element("input",
+			(el) => {
+				el.type = "submit";
+			},
+		),
+	);
 
 	open_item(item);
-	item.appendChild(create2("div", {"className":"search_title", "onclick":show_edit_form}, [
-		create2("div", {"className":"edit"}, [
-			document.createTextNode("[Edit]")
-		]),
-		document.createTextNode(bookmark["title"])
-	]));
-	item.appendChild(form);
+	item.append(create_element("div",
+		set_class("search_title"),
+		(el) => {
+			el.onclick = show_edit_form;
+		},
+		create_element("div",
+			set_class("edit"),
+			"[Edit]",
+		),
+		bookmark["title"],
+	));
+	item.append(form);
 	focus.focus();
 }
 
@@ -145,39 +139,67 @@ function show_edit_form(e) {
 	const item = e.currentTarget.parentNode;
 	const bookmark = bookmarks[item.id];
 
-	const title_input = create("input", {"type":"text", "value":bookmark["title"]});
-	const checkbox = create("input", {"type":"checkbox", "id":"check"});
-	if (bookmark["context"]) {
-		checkbox.checked = true;
-	}
-	const form = create2("form", {"className":"edit"}, [
+	const title_input = create_element("input",
+		(el) => {
+			el.type = "text";
+			el.value = bookmark["title"];
+		},
+	);
+	const checkbox = create_element("input",
+		(el) => {
+			el.type = "checkbox";
+			el.id = "check";
+			el.checked = bookmark["context"];
+		},
+	);
+	const form = create_element("form",
+		set_class("edit"),
 		title_input,
-		create("br", {}),
+		create_element("br"),
 		checkbox,
-		create2("label", {"htmlFor":"check"}, [
-			document.createTextNode("add to context menu")
-		]),
-		create("br", {}),
-		create("input", {"type":"submit", "value":"OK", "onclick":() => {
-			bookmark["title"] = title_input.value;
-			bookmark["context"] = checkbox.checked ? true : undefined;
-			save();
-			close_item();
-			return false;
-		}}),
-		create("input", {"type":"submit", "value":"Cancel", "onclick":() => {
-			close_item();
-			return false;
-		}})
-	]);
+		create_element("label",
+			(el) => {
+				el.htmlFor = "check";
+			},
+			"add to context menu",
+		),
+		create_element("br"),
+		create_element("input",
+			(el) => {
+				el.type = "submit";
+				el.value = "OK";
+				el.onclick = () => {
+					bookmark["title"] = title_input.value;
+					bookmark["context"] = checkbox.checked ? true : undefined;
+					save();
+					close_item();
+					return false;
+				};
+			},
+		),
+		create_element("input",
+			(el) => {
+				el.type = "submit";
+				el.value = "Cancel";
+				el.onclick = () => {
+					close_item();
+					return false;
+				};
+			},
+		),
+	);
 	open_item(item);
 	item.appendChild(form);
 }
 
 function create_title(bookmark) {
-	return create2("div", {"className":"menu", "onclick":show_search_form}, [
-		document.createTextNode(bookmark["title"])
-	]);
+	return create_element("div",
+		set_class("menu"),
+		(el) => {
+			el.onclick = show_search_form;
+		},
+		bookmark["title"],
+	);
 }
 
 function item_ondragstart(e) {
@@ -200,34 +222,43 @@ function drop_ondragover(e) {
 	}
 }
 
-const movedrop_props = {
-	"className":"movedrop",
-	"ondragover":drop_ondragover,
-	"ondragenter":(e) => {
-		e.currentTarget.style.backgroundColor = "rgba(51,51,51,0.5)";
-	},
-	"ondragleave":(e) => {
-		e.currentTarget.style.backgroundColor = "transparent";
-	},
-	"ondrop":(e) => {
-		e.preventDefault();
-		e.currentTarget.style.backgroundColor = "transparent";
-		const drag_id = e.dataTransfer.getData(DRAG_FORMAT);
-		if (drag_id == "" || isNaN(drag_id)) return;
-		const drag = document.getElementById(drag_id);
-		if (!drag) return;
-		const drop = e.currentTarget.parentNode;
-		if (drag === drop) return;
-		list.removeChild(drag);
-		list.insertBefore(drag, drop);
-		save();
-	}
-};
+function movedrop_ondragenter(e) {
+	e.currentTarget.style.opacity = 0.4;
+}
 
-removedrop["ondragover"] = drop_ondragover;
-removedrop["ondrop"] = (e) => {
+function movedrop_ondragleave(e) {
+	e.currentTarget.style.opacity = 0;
+}
+
+function movedrop_ondrop(e) {
 	e.preventDefault();
-	e.currentTarget.style.backgroundColor = "transparent";
+	e.currentTarget.style.opacity = 0;
+	const drag_id = e.dataTransfer.getData(DRAG_FORMAT);
+	if (drag_id == "" || isNaN(drag_id)) return;
+	const drag = document.getElementById(drag_id);
+	if (!drag) return;
+	const drop = e.currentTarget.parentNode;
+	if (drag === drop) return;
+	list.removeChild(drag);
+	list.insertBefore(drag, drop);
+	save();
+}
+
+function create_movedrop() {
+	return create_element("div",
+		set_class("movedrop"),
+		(el) => {
+			el.ondragover = drop_ondragover;
+			el.ondragenter = movedrop_ondragenter;
+			el.ondragleave = movedrop_ondragleave;
+			el.ondrop = movedrop_ondrop;
+		},
+	);
+}
+
+removedrop.ondragover = drop_ondragover;
+removedrop.ondrop = (e) => {
+	e.preventDefault();
 	const drag_id = e.dataTransfer.getData(DRAG_FORMAT);
 	if (drag_id == "" || isNaN(drag_id)) return;
 	const drag = document.getElementById(drag_id);
@@ -237,18 +268,22 @@ removedrop["ondrop"] = (e) => {
 };
 
 bookmarks.forEach((bookmark, i) => {
-	list.appendChild(create2("div", {
-		"id":i,
-		"className":"item",
-		"draggable":true,
-		"ondragstart":item_ondragstart,
-		"ondragend":item_ondragend
-	}, [
-		create("div", movedrop_props),
-		create_title(bookmark)
-	]));
+	list.append(create_element("div",
+		set_class("item"),
+		(el) => {
+			el.id = i;
+			el.draggable = true;
+			el.ondragstart = item_ondragstart;
+			el.ondragend = item_ondragend;
+		},
+		create_movedrop(),
+		create_title(bookmark),
+	));
 });
 
-list.appendChild(create2("div", {"className":"bottom"}, [
-	create("div", movedrop_props)
-]));
+list.append(create_element("div",
+	set_class("bottom"),
+	create_movedrop(),
+));
+
+document.body.append(list, create_element("hr"), add);
